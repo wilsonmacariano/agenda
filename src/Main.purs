@@ -17,7 +17,19 @@ import React.DOM.Props (className, href, target, onClick, _type, placeholder) as
 import Thermite as T
 
 import Control.Monad.Eff (Eff)
-import Data.Maybe (fromJust)
+import Control.Monad.Eff.Class (liftEff)
+import Control.Monad.Eff.Console (log, CONSOLE)
+
+import Control.Monad.Rec.Class (forever)
+import Control.Monad.Trans.Class (lift)
+
+import Control.Monad.Aff (Aff, launchAff)
+import Network.HTTP.Affjax (affjax, defaultRequest)
+
+import Data.HTTP.Method (Method(..))
+
+import Data.Either
+import Data.Maybe 
 import Data.Nullable (toMaybe)
 import Data.Array
 
@@ -29,12 +41,16 @@ type TasksState = { tasks :: Array Task }
 
 tasks = map mkTask [ "Acordar", "Levantar", "Comer", "Durmir" ]
 
-data Action = Add
+data Action = Add | CallServer
 
 performAction :: T.PerformAction _ TasksState _ Action
 performAction Add _ _ =
   void (T.cotransform
         (\state -> state { tasks = ([ { description: "1"} ] <> state.tasks) }))
+performAction CallServer _ _ = do
+  amount <- lift fetchData
+  void (T.cotransform
+        (\state -> state { tasks = ([ { description: amount } ] <> state.tasks) }))
 
 initialState :: TasksState
 initialState = { tasks: tasks }
@@ -59,12 +75,16 @@ render dispatch _ state _ =
             R.div [ RP.className "modal-footer" ]
             [
               R.input [ RP._type "text"
-                      , RP.placeholder "my shit"]
+                      , RP.placeholder "something here..."]
               []
               ,
               R.button [ RP.className "btn btn-default"
                        , RP.onClick \_ -> dispatch Add ]
               [ R.text "Add" ]
+              ,
+                            R.button [ RP.className "btn btn-default"
+                       , RP.onClick \_ -> dispatch Shit ]
+              [ R.text "Shit" ]
             ]
         ]
       ]
@@ -73,6 +93,11 @@ render dispatch _ state _ =
 
 spec :: T.Spec _ _ _ _
 spec = T.simpleSpec performAction render
+
+fetchData :: Aff _ String
+fetchData = do
+  res <- affjax $ defaultRequest { url = "http://localhost/agenda/data.json", method = Left GET }
+  pure res.response
 
 main :: Eff (dom :: DOM.DOM) Unit
 main = void do

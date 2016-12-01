@@ -14,7 +14,8 @@
     "purescript-dom": "^3.2.0",
     "purescript-react": "^2.0.0",
     "purescript-react-dom": "^2.0.0",
-    "purescript-thermite": "^3.0.0"
+    "purescript-thermite": "^3.0.0",
+    "purescript-affjax": "^3.0.1"
   },
   "devDependencies": {
     "purescript-psci-support": "^2.0.0"
